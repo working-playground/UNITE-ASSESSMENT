@@ -1,0 +1,132 @@
+// import { S3Event } from "aws-lambda";
+// import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+// import { createPool, Pool } from "mysql2/promise";
+// import { parse } from "csv-parse";
+
+// let pool: Pool | null = null;
+
+// function getDbPool(): Pool {
+//   if (!pool) {
+//     pool = createPool({
+//       host: process.env.DB_HOST,
+//       port: Number(process.env.DB_PORT || "3306"),
+//       user: process.env.DB_USER,
+//       password: process.env.DB_PASSWORD,
+//       database: process.env.DB_NAME,
+//       connectionLimit: 5
+//     });
+//   }
+//   return pool;
+// }
+
+// const s3Client = new S3Client({
+//   region: process.env.AWS_REGION || "ap-south-1"
+// });
+
+// async function readObjectBodyAsString(
+//   bucket: string,
+//   key: string
+// ): Promise<string> {
+//   const command = new GetObjectCommand({
+//     Bucket: bucket,
+//     Key: key
+//   });
+
+//   const response = await s3Client.send(command);
+
+//   const body = response.Body;
+//   if (!body) {
+//     throw new Error("Empty S3 object body");
+//   }
+
+//   const text = await (body as any).transformToString("utf-8");
+
+//   return text;
+// }
+
+// async function parseCsvText(csvText: string): Promise<any[]> {
+//   return new Promise(function (resolve, reject) {
+//     const records: any[] = [];
+
+//     const parser = parse(csvText, {
+//       columns: true,
+//       trim: true
+//     });
+
+//     parser.on("readable", function () {
+//       let record;
+//       // eslint-disable-next-line no-cond-assign
+//       while ((record = parser.read()) !== null) {
+//         records.push(record);
+//       }
+//     });
+
+//     parser.on("end", function () {
+//       resolve(records);
+//     });
+
+//     parser.on("error", function (error) {
+//       reject(error);
+//     });
+//   });
+// }
+
+// async function processCsvRecords(records: any[]): Promise<void> {
+//   const pool = getDbPool();
+
+//   for (const row of records) {
+//     const name: string = row.name;
+//     const phone: string = row.phone;
+//     const email: string = row.email;
+//     const status: string = row.status || "new";
+//     const source: string = row.source || "manual";
+//     const assignedToUserId: number | null = row.assignedToUserId
+//       ? Number(row.assignedToUserId)
+//       : null;
+
+//     if (!name || !phone || !email) {
+//       continue;
+//     }
+
+//     const sql: string = `
+//       INSERT INTO leads (name, phone, email, status, source, assigned_to_user_id)
+//       VALUES (?, ?, ?, ?, ?, ?)
+//       ON DUPLICATE KEY UPDATE
+//         name = VALUES(name),
+//         status = VALUES(status),
+//         source = VALUES(source),
+//         assigned_to_user_id = VALUES(assigned_to_user_id),
+//         updated_at = NOW()
+//     `;
+
+//     await pool.query(sql, [
+//       name,
+//       phone,
+//       email,
+//       status,
+//       source,
+//       assignedToUserId
+//     ]);
+//   }
+// }
+
+// export const handler = async (event: S3Event): Promise<void> => {
+//   for (const record of event.Records) {
+//     const bucket = record.s3.bucket.name;
+//     const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
+
+//     const csvText = await readObjectBodyAsString(bucket, key);
+//     const records = await parseCsvText(csvText);
+//     await processCsvRecords(records);
+//   }
+// };
+
+// /*
+// Lambda handler:
+// - Triggered by S3 ObjectCreated events.
+// - Reads CSV from S3.
+// - Parses rows with columns: name, phone, email, status, source, assignedToUserId.
+// - Upserts into leads table using ON DUPLICATE KEY UPDATE (relies on UNIQUE on phone/email).
+// Environment variables expected:
+// - DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, AWS_REGION.
+// */
