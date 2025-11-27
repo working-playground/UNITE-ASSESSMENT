@@ -146,3 +146,29 @@ npm test
 
 ### Run with coverage enabled
 npm run test:coverage
+
+
+## AWS Integrations (S3 + Lambda + RDS)
+
+This project includes optional AWS integrations to demonstrate cloud workflow capability.
+
+1. Amazon S3 (Image Upload + CSV Upload)
+
+A private S3 bucket was created:
+
+Bucket Name: test-assessments-test
+
+Region: ap-south-1 (Mumbai)
+
+This bucket is used for:
+
+Lead image uploads
+
+CSV file uploads for lead import
+
+The backend uses the official AWS SDK v3 client to upload images and CSV files.
+
+2. AWS Lambda (Automatic CSV Processing)
+
+A Lambda function named:unite-leads-csv-processor
+was created to automatically process any CSV file uploaded to S3.
