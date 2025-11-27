@@ -3,6 +3,7 @@ import { getConfig } from "./config/env";
 import { errorHandler } from "./middlewares/errorHandler";
 import { connectMongo } from "./persistence/mongo/connection";
 import { testMySqlConnection } from "./persistence/mysql/connection";
+import { initMySqlSchema } from "./persistence/mysql/init";
 import { initializeMySqlSchema } from "./persistence/mysql/schemaInitializer";
 import { callTaskRouter } from "./routes/callTask.route";
 import { leadRouter } from "./routes/lead.route";
@@ -18,6 +19,7 @@ async function bootstrap(): Promise<void> {
 
         const app = createApp();
         const config = getConfig();
+        await initMySqlSchema();
 
         app.get("/ping", function (req, res) {
             res.json({ message: "pong" });
